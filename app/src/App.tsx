@@ -25,7 +25,7 @@ const App: React.FC = () => {
     setRightPanelWidth,
     isGithubConnected, setIsGithubConnected,
     githubUser, setGithubUser, setGithubRepos,
-    setTerminalLines, setChatMessages,
+    setTerminalLines, addTerminalLine, setChatMessages,
     setIsAiResponding, searchQuery, setSearchQuery, setSearchResults, searchResults
   } = store;
 
@@ -81,10 +81,6 @@ const App: React.FC = () => {
       document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isResizingSidebar, isResizingRight]);
-
-  const addTerminalLine = (type: 'input' | 'output' | 'error', content: string) => {
-    setTerminalLines(prev => [...prev, { id: `term-${Date.now()}`, type, content, timestamp: Date.now() }]);
-  };
 
   const handleSaveFile = () => {
     if (activeFile) {
@@ -265,7 +261,6 @@ const App: React.FC = () => {
             githubUser={githubUser}
             onFileClick={handleFileClick}
             onNewFile={handleNewFile}
-            onFileUpload={(list: any) => handleFileUpload({ target: { files: list } } as any)}
             onSearch={handleSearch}
             onGitHubLogin={handleGitHubLogin}
             onGitHubPush={() => { addTerminalLine('output', '⬆️ Pushing...'); setTimeout(() => addTerminalLine('output', '✓ Pushed'), 1000); }}

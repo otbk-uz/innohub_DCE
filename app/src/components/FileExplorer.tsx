@@ -16,12 +16,11 @@ interface FileExplorerProps {
   githubUser: { login: string; avatar_url: string; name: string } | null;
   onFileClick: (fileId: string) => void;
   onNewFile: () => void;
-  
   onSearch: (query: string) => void;
   onGitHubLogin: () => void;
   onGitHubPush: () => void;
   onGitHubPull: () => void;
-  fileInputRef: React.RefObject<HTMLInputElement>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
 
 const FileIcon: React.FC<{ file: FileItem }> = React.memo(({ file }) => {

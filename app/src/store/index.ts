@@ -37,6 +37,7 @@ export interface AppState {
   // Terminal & Chat
   terminalLines: TerminalLine[];
   setTerminalLines: (lines: TerminalLine[] | ((prev: TerminalLine[]) => TerminalLine[])) => void;
+  addTerminalLine: (type: 'input' | 'output' | 'error', content: string) => void;
   chatMessages: ChatMessage[];
   setChatMessages: (msgs: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => void;
   isAiResponding: boolean;
@@ -153,6 +154,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   terminalLines: [{ id: '1', type: 'output', content: 'INNOHUB Terminal v3.0.0 - Super AI', timestamp: Date.now() }],
   setTerminalLines: (updater) => set((state) => ({ terminalLines: typeof updater === 'function' ? updater(state.terminalLines) : updater })),
+  addTerminalLine: (type: 'input' | 'output' | 'error', content: string) => set((state) => ({
+    terminalLines: [...state.terminalLines, { id: `term-${Date.now()}`, type, content, timestamp: Date.now() }]
+  })),
   chatMessages: [],
   setChatMessages: (updater) => set((state) => ({ chatMessages: typeof updater === 'function' ? updater(state.chatMessages) : updater })),
   isAiResponding: false,
