@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   FileCode, FileJson, FileType, Plus, Upload,
-  ChevronRight, ChevronDown, Search, GitBranch, Github
+  ChevronRight, ChevronDown, Github
 } from 'lucide-react';
 import { FileItem, SidebarIcon, SearchResult } from '../types';
 
@@ -16,12 +16,12 @@ interface FileExplorerProps {
   githubUser: { login: string; avatar_url: string; name: string } | null;
   onFileClick: (fileId: string) => void;
   onNewFile: () => void;
-  onFileUpload: (files: FileList) => void;
+  
   onSearch: (query: string) => void;
   onGitHubLogin: () => void;
   onGitHubPush: () => void;
   onGitHubPull: () => void;
-  fileInputRef: React.RefObject<HTMLInputElement, null>;
+  fileInputRef: React.RefObject<HTMLInputElement>;
 }
 
 const FileIcon: React.FC<{ file: FileItem }> = React.memo(({ file }) => {
@@ -84,7 +84,6 @@ export const FileExplorer: React.FC<FileExplorerProps> = React.memo(({
   githubUser,
   onFileClick,
   onNewFile,
-  onFileUpload,
   onSearch,
   onGitHubLogin,
   onGitHubPush,

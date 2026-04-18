@@ -22,7 +22,7 @@ const App: React.FC = () => {
     showRightPanel, setShowRightPanel,
     setShowSettings, setShowCommandPalette,
     sidebarWidth, setSidebarWidth,
-    rightPanelWidth, setRightPanelWidth,
+    setRightPanelWidth,
     isGithubConnected, setIsGithubConnected,
     githubUser, setGithubUser, setGithubRepos,
     setTerminalLines, setChatMessages,
