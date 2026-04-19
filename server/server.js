@@ -4,6 +4,8 @@ import { spawn, exec } from 'child_process';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
+import { mkdir } from 'fs/promises';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -76,9 +78,6 @@ app.post('/api/execute', (req, res) => {
 });
 
 // API for saving files to disk (for code execution)
-import fs from 'fs';
-import { mkdir } from 'fs/promises';
-
 app.post('/api/save-file', async (req, res) => {
   const { filename, content, cwd } = req.body;
   
