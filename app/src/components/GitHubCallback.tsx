@@ -1,39 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { useAppStore } from '../store';
 import { githubAuth } from '../lib/githubAuth';
-import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, Github } from 'lucide-react';
 
 export const GitHubCallback: React.FC = () => {
   const searchParams = new URLSearchParams(window.location.search);
+  const urlParams = {
+    code: searchParams.get('code'),
+    state: searchParams.get('state'),
+    error: searchParams.get('error'),
+    error_description: searchParams.get('error_description')
+  };
   const { login, setGithubUser, setGithubRepos, setIsGithubConnected } = useAppStore();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
   const [error, setError] = useState('');
 
   useEffect(() => {
     const handleCallback = async () => {
-      const code = searchParams.get('code');
-      const state = searchParams.get('state');
-      const errorParam = searchParams.get('error');
+      console.log('GitHub Callback URL params:', urlParams);
 
-      if (errorParam) {
+      if (urlParams.error) {
         setStatus('error');
-        setError(`GitHub authorization failed: ${errorParam}`);
+        setError(`GitHub xatoligi: ${urlParams.error}${urlParams.error_description ? ` - ${urlParams.error_description}` : ''}`);
         return;
       }
 
-      if (!code || !state) {
+      if (!urlParams.code || !urlParams.state) {
         setStatus('error');
-        setError('Invalid callback parameters');
+        setError('Noto\'g\'ri callback parametrlari. Code yoki state yetishmayapti.');
         return;
       }
 
       try {
         // Exchange code for access token
-        const success = await githubAuth.handleCallback(code, state);
+        const success = await githubAuth.handleCallback(urlParams.code, urlParams.state);
         
         if (!success) {
           setStatus('error');
-          setError('Failed to authenticate with GitHub');
+          setError('GitHub bilan autentifikatsiya qilishda xatolik. Iltimos, qayta urinib ko\'ring.');
           return;
         }
 
@@ -42,7 +46,7 @@ export const GitHubCallback: React.FC = () => {
         
         if (!user) {
           setStatus('error');
-          setError('Failed to fetch user information');
+          setError('Foydalanuvchi ma\'lumotlarini olishda xatolik');
           return;
         }
 
@@ -71,12 +75,12 @@ export const GitHubCallback: React.FC = () => {
       } catch (err) {
         console.error('GitHub callback error:', err);
         setStatus('error');
-        setError('An unexpected error occurred');
+        setError('Kutilmagan xatolik yuz berdi');
       }
     };
 
     handleCallback();
-  }, [searchParams, login, setGithubUser, setGithubRepos, setIsGithubConnected]);
+  }, [login, setGithubUser, setGithubRepos, setIsGithubConnected]);
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#0a0a0a] via-[#1a1a2e] to-[#16213e]">
@@ -85,7 +89,7 @@ export const GitHubCallback: React.FC = () => {
           {status === 'processing' && (
             <>
               <div className="w-16 h-16 bg-[#238636]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Loader2 size={32} className="text-[#238636] animate-spin" />
+                <Github size={32} className="text-[#238636]" />
               </div>
               <h2 className="text-xl font-semibold text-white mb-2">
                 GitHub bilan ulanmoqda...
