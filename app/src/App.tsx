@@ -11,12 +11,15 @@ import { ChatPanel } from './components/ChatPanel';
 import { SettingsModal } from './components/SettingsModal';
 import { CommandPalette } from './components/CommandPalette';
 
-import { Sparkles, GitBranch, Brain, Settings, Github, FileCode, Search, Bug, Box, Play } from 'lucide-react';
+import { Sparkles, GitBranch, Brain, Settings, Github, FileCode, Search, Bug, Box, Play, X } from 'lucide-react';
 
 const WS_TERMINAL_URL = 'ws://localhost:3002/terminal';
 
 const App: React.FC = () => {
   const store = useAppStore();
+  const [previewOutput, setPreviewOutput] = useState<string>('');
+  const [showPreview, setShowPreview] = useState<boolean>(false);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
   const {
     files, setFiles, tabs, setTabs,
     activeSidebarIcon, setActiveSidebarIcon,
@@ -239,29 +242,63 @@ const App: React.FC = () => {
           <button 
             onClick={() => {
               if (!activeFile) return;
-              // Open terminal if closed
-              if (!showBottomPanel) setShowBottomPanel(true);
+              // Show preview panel
+              setShowPreview(true);
+              setIsRunning(true);
+              setPreviewOutput(`▶️ Running: ${activeFile.name}\n${'='.repeat(40)}\n\n`);
+              
               // Send run command via WebSocket
               const ws = new WebSocket(WS_TERMINAL_URL);
+              let output = '';
+              
               ws.onopen = () => {
                 const ext = activeFile.name.split('.').pop();
                 let command = '';
-                if (ext === 'js' || ext === 'mjs') command = `node ${activeFile.name}`;
-                else if (ext === 'ts') command = `npx ts-node ${activeFile.name}`;
-                else if (ext === 'py') command = `python ${activeFile.name}`;
-                else if (ext === 'html') command = `start ${activeFile.name}`;
-                else command = `echo "Run command for ${activeFile.name}"`;
+                const projectPath = 'C:\\\\Users\\\\admin\\\\innohub_DCE\\\\app';
+                
+                if (ext === 'js' || ext === 'mjs') command = `node "${projectPath}\\\\${activeFile.name}"`;
+                else if (ext === 'ts') command = `npx ts-node "${projectPath}\\\\${activeFile.name}"`;
+                else if (ext === 'py') command = `python "${projectPath}\\\\${activeFile.name}"`;
+                else if (ext === 'html') {
+                  setPreviewOutput(`🌐 Opening HTML file in browser...\nFile: ${activeFile.name}`);
+                  window.open(`http://localhost:5173/${activeFile.name}`, '_blank');
+                  ws.close();
+                  setIsRunning(false);
+                  return;
+                }
+                else command = `echo "Unsupported file type: ${activeFile.name}"`;
                 
                 ws.send(JSON.stringify({ type: 'command', command }));
                 addTerminalLine('output', `[Run] ${command}`);
-                ws.close();
+              };
+              
+              ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'stdout' || data.type === 'stderr') {
+                  output += data.data;
+                  setPreviewOutput(prev => prev + data.data);
+                } else if (data.type === 'exit') {
+                  setIsRunning(false);
+                  setPreviewOutput(prev => prev + `\n${'='.repeat(40)}\n✅ Exit code: ${data.code}\n`);
+                  ws.close();
+                } else if (data.type === 'error') {
+                  setIsRunning(false);
+                  setPreviewOutput(prev => prev + `\n❌ Error: ${data.data}\n`);
+                  ws.close();
+                }
+              };
+              
+              ws.onerror = () => {
+                setIsRunning(false);
+                setPreviewOutput(prev => prev + '\n❌ WebSocket connection failed\nMake sure server is running: node server/server.js\n');
               };
             }}
-            disabled={!activeFile}
-            className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${activeFile ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}
-            title={activeFile ? `Run ${activeFile.name}` : 'No active file'}
+            disabled={!activeFile || isRunning}
+            className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${activeFile ? isRunning ? 'bg-yellow-600 text-white' : 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}
+            title={activeFile ? isRunning ? 'Running...' : `Run ${activeFile.name}` : 'No active file'}
           >
-            <Play size={12} fill="currentColor" /> Run
+            <Play size={12} fill="currentColor" className={isRunning ? 'animate-pulse' : ''} /> 
+            {isRunning ? 'Running...' : 'Run'}
           </button>
           {isGithubConnected && <span className="text-xs text-gray-400 flex items-center gap-1"><Github size={12} /> @{githubUser?.login}</span>}
           <button onClick={() => setShowSettings(true)} className="p-1 hover:bg-[#2a2d2e] rounded"><Settings size={14} /></button>
@@ -311,6 +348,29 @@ const App: React.FC = () => {
             />
           )}
         </div>
+
+        {/* Preview Panel */}
+        {showPreview && (
+          <>
+            <div className="w-1 cursor-col-resize hover:bg-[#007acc]" />
+            <div className="w-80 bg-[#181818] border-l border-[#2b2b2b] flex flex-col">
+              <div className="h-9 bg-[#1e1e1e] border-b border-[#2b2b2b] flex items-center justify-between px-3">
+                <span className="text-xs font-medium flex items-center gap-2">
+                  <Play size={12} /> Preview Output
+                  {isRunning && <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />}
+                </span>
+                <button onClick={() => setShowPreview(false)} className="p-1 hover:bg-[#2a2d2e] rounded">
+                  <X size={12} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-auto p-3 font-mono text-xs">
+                <pre className="whitespace-pre-wrap break-words text-gray-300">
+                  {previewOutput || 'Click Run to see output here...'}
+                </pre>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Right Panel (Chat) */}
         {showRightPanel && (
