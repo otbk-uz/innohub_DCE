@@ -251,58 +251,82 @@ const App: React.FC = () => {
         </div>
         <div className="flex items-center gap-2">
           <button 
-            onClick={() => {
+            onClick={async () => {
               if (!activeFile) return;
+              
               // Show preview panel
               setShowPreview(true);
               setIsRunning(true);
               setPreviewOutput(`▶️ Running: ${activeFile.name}\n${'='.repeat(40)}\n\n`);
               
-              // Send run command via WebSocket
-              const ws = new WebSocket(WS_TERMINAL_URL);
-              let output = '';
-              
-              ws.onopen = () => {
-                const ext = activeFile.name.split('.').pop();
-                let command = '';
-                const projectPath = 'C:\\\\Users\\\\admin\\\\innohub_DCE\\\\app';
+              try {
+                // Avval faylni serverga saqlash (diskka yozish)
+                const saveResponse = await fetch('http://localhost:3002/api/save-file', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    filename: activeFile.name,
+                    content: activeFile.content
+                  })
+                });
                 
-                if (ext === 'js' || ext === 'mjs') command = `node "${projectPath}\\\\${activeFile.name}"`;
-                else if (ext === 'ts') command = `npx ts-node "${projectPath}\\\\${activeFile.name}"`;
-                else if (ext === 'py') command = `python "${projectPath}\\\\${activeFile.name}"`;
-                else if (ext === 'html') {
-                  setPreviewOutput(`🌐 Opening HTML file in browser...\nFile: ${activeFile.name}`);
-                  window.open(`http://localhost:5173/${activeFile.name}`, '_blank');
-                  ws.close();
-                  setIsRunning(false);
-                  return;
+                if (!saveResponse.ok) {
+                  throw new Error('Faylni saqlashda xatolik');
                 }
-                else command = `echo "Unsupported file type: ${activeFile.name}"`;
                 
-                ws.send(JSON.stringify({ type: 'command', command }));
-                addTerminalLine('output', `[Run] ${command}`);
-              };
-              
-              ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'stdout' || data.type === 'stderr') {
-                  output += data.data;
-                  setPreviewOutput(prev => prev + data.data);
-                } else if (data.type === 'exit') {
+                addTerminalLine('output', `[Save] ${activeFile.name} saqlandi`);
+                
+                // Endi WebSocket orqali ishga tushirish
+                const ws = new WebSocket(WS_TERMINAL_URL);
+                let output = '';
+                
+                ws.onopen = () => {
+                  const ext = activeFile.name.split('.').pop();
+                  let command = '';
+                  const projectPath = 'C:/Users/admin/innohub_DCE/app';
+                  
+                  if (ext === 'js' || ext === 'mjs') command = `node "${projectPath}/${activeFile.name}"`;
+                  else if (ext === 'ts') command = `npx ts-node "${projectPath}/${activeFile.name}"`;
+                  else if (ext === 'py') command = `python "${projectPath}/${activeFile.name}"`;
+                  else if (ext === 'html') {
+                    setPreviewOutput(`🌐 Opening HTML file in browser...\nFile: ${activeFile.name}`);
+                    window.open(`http://localhost:5173/${activeFile.name}`, '_blank');
+                    ws.close();
+                    setIsRunning(false);
+                    return;
+                  }
+                  else command = `echo "Unsupported file type: ${activeFile.name}"`;
+                  
+                  ws.send(JSON.stringify({ type: 'command', command }));
+                  addTerminalLine('output', `[Run] ${command}`);
+                };
+                
+                ws.onmessage = (event) => {
+                  const data = JSON.parse(event.data);
+                  if (data.type === 'stdout' || data.type === 'stderr') {
+                    output += data.data;
+                    setPreviewOutput(prev => prev + data.data);
+                  } else if (data.type === 'exit') {
+                    setIsRunning(false);
+                    setPreviewOutput(prev => prev + `\n${'='.repeat(40)}\n✅ Exit code: ${data.code}\n`);
+                    ws.close();
+                  } else if (data.type === 'error') {
+                    setIsRunning(false);
+                    setPreviewOutput(prev => prev + `\n❌ Error: ${data.data}\n`);
+                    ws.close();
+                  }
+                };
+                
+                ws.onerror = () => {
                   setIsRunning(false);
-                  setPreviewOutput(prev => prev + `\n${'='.repeat(40)}\n✅ Exit code: ${data.code}\n`);
-                  ws.close();
-                } else if (data.type === 'error') {
-                  setIsRunning(false);
-                  setPreviewOutput(prev => prev + `\n❌ Error: ${data.data}\n`);
-                  ws.close();
-                }
-              };
-              
-              ws.onerror = () => {
+                  setPreviewOutput(prev => prev + '\n❌ WebSocket connection failed\nMake sure server is running: node server/server.js\n');
+                };
+              } catch (error) {
                 setIsRunning(false);
-                setPreviewOutput(prev => prev + '\n❌ WebSocket connection failed\nMake sure server is running: node server/server.js\n');
-              };
+                const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+                setPreviewOutput(prev => prev + `\n❌ Error: ${errorMsg}\n`);
+                addTerminalLine('error', `[Error] ${errorMsg}`);
+              }
             }}
             disabled={!activeFile || isRunning}
             className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${activeFile ? isRunning ? 'bg-yellow-600 text-white' : 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gray-700 text-gray-500 cursor-not-allowed'}`}

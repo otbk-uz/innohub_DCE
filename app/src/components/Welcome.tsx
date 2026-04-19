@@ -20,14 +20,20 @@ export const Welcome: React.FC = () => {
   const { login } = useAppStore();
 
   const handleStart = () => {
-    console.log('Boshlash tugmasi bosildi');
-    // Guest login - no authentication required
-    login({
-      email: 'guest@innohub.uz',
-      name: 'Mehmon Foydalanuvchi',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest'
-    });
-    console.log('Login chaqirildi');
+    console.log('[Welcome] Boshlash tugmasi bosildi');
+    try {
+      // Guest login - no authentication required
+      const guestUser = {
+        email: 'guest@innohub.uz',
+        name: 'Mehmon Foydalanuvchi',
+        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest'
+      };
+      login(guestUser);
+      console.log('[Welcome] Login muvaffaqiyatli bajarildi', guestUser);
+    } catch (error) {
+      console.error('[Welcome] Login xatoligi:', error);
+      alert('Tizimga kirishda xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.');
+    }
   };
 
   const features = [

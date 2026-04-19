@@ -1,6 +1,6 @@
 import express from 'express';
 import { WebSocketServer } from 'ws';
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -16,6 +16,11 @@ const PORT = process.env.PORT || 3002;
 
 // Project root directory (where commands will be executed)
 const PROJECT_ROOT = path.join(__dirname, '..');
+
+// Windows uchun cross-platform path
+const getCrossPlatformPath = (inputPath) => {
+  return inputPath.replace(/\\/g, '/');
+};
 
 // HTTP API for simple commands
 app.post('/api/execute', (req, res) => {
@@ -68,6 +73,36 @@ app.post('/api/execute', (req, res) => {
       command
     });
   });
+});
+
+// API for saving files to disk (for code execution)
+import fs from 'fs';
+import { mkdir } from 'fs/promises';
+
+app.post('/api/save-file', async (req, res) => {
+  const { filename, content, cwd } = req.body;
+  
+  if (!filename || content === undefined) {
+    return res.status(400).json({ error: 'Filename and content required' });
+  }
+
+  const workingDir = cwd || path.join(PROJECT_ROOT, 'app');
+  const filePath = path.join(workingDir, filename);
+  
+  try {
+    // Create directory if it doesn't exist
+    const dir = path.dirname(filePath);
+    await mkdir(dir, { recursive: true });
+    
+    // Write file
+    await fs.promises.writeFile(filePath, content, 'utf8');
+    console.log(`[SAVE] ${filePath}`);
+    
+    res.json({ success: true, path: filePath });
+  } catch (error) {
+    console.error('[SAVE ERROR]', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // WebSocket server for interactive terminal

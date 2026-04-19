@@ -1,0 +1,15 @@
+{
+  "name": "innohub-dce",
+  "version": "3.0.0",
+  "description": "INNOHUB IDE - Dynamic Code Execution Environment",
+  "scripts": {
+    "install:all": "npm install && cd app && npm install && cd ../server && npm install",
+    "dev:server": "cd server && npm run dev",
+    "dev:app": "cd app && npm run dev",
+    "build:app": "cd app && npm run build",
+    "start": "cd server && npm start"
+  },
+  "keywords": ["ide", "editor", "ai", "code-execution"],
+  "author": "Otabekxoff Creator",
+  "license": "MIT"
+}

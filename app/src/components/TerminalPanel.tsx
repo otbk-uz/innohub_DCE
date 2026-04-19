@@ -68,9 +68,10 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({ onClose }) => {
       addTerminalLine('output', '[System] Terminal disconnected');
     };
 
-    ws.onerror = (_err) => {
+    ws.onerror = (err) => {
       if (!isMounted) return;
-      addTerminalLine('error', '[System] WebSocket error');
+      console.error('[Terminal] WebSocket xatolik:', err);
+      addTerminalLine('error', '[System] WebSocket xatolik - Server ishga tushirilganini tekshiring: node server/server.js');
     };
 
     return () => {
