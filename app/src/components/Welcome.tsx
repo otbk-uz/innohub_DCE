@@ -20,12 +20,14 @@ export const Welcome: React.FC = () => {
   const { login } = useAppStore();
 
   const handleStart = () => {
+    console.log('Boshlash tugmasi bosildi');
     // Guest login - no authentication required
     login({
       email: 'guest@innohub.uz',
       name: 'Mehmon Foydalanuvchi',
       avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest'
     });
+    console.log('Login chaqirildi');
   };
 
   const features = [
@@ -126,8 +128,9 @@ export const Welcome: React.FC = () => {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
             <button
+              type="button"
               onClick={handleStart}
-              className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25"
+              className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 cursor-pointer"
             >
               <Play className="w-5 h-5" />
               Boshlash
@@ -224,8 +227,9 @@ export const Welcome: React.FC = () => {
             Ro'yxatdan o'tish shart emas! Boshlash tugmasini bosib, darhol kod yozishni boshlang.
           </p>
           <button
+            type="button"
             onClick={handleStart}
-            className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 mx-auto"
+            className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 shadow-lg shadow-blue-500/25 mx-auto cursor-pointer"
           >
             <Play className="w-5 h-5" />
             Boshlash
