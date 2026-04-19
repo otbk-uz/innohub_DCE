@@ -44,36 +44,32 @@ const App: React.FC = () => {
     logout, authUser
   } = useAppStore();
 
-  // Check if we're on GitHub callback URL
-  const isGitHubCallback = window.location.pathname.includes('auth/github/callback') ||
-                           window.location.search.includes('code=');
-
-  // Show GitHub callback handler if on callback URL
-  if (isGitHubCallback) {
-    return <GitHubCallback />;
-  }
-
-  // Show welcome page if not authenticated
-  if (!isAuthenticated) {
-    return <Welcome />;
-  }
-
-  const activeFile = files.find(f => f.id === tabs.find(t => t.isActive)?.fileId);
+  // All useEffect hooks must be called before any conditional returns
+  useEffect(() => {
+    if (!isAuthenticated || isResizingSidebar || isResizingRight) return;
+    aiEngine.setContext(files, files.find(f => f.id === tabs.find(t => t.isActive)?.fileId));
+  }, [files, tabs, aiEngine, isAuthenticated, isResizingSidebar, isResizingRight]);
 
   useEffect(() => {
-    aiEngine.setContext(files, activeFile);
-  }, [files, activeFile, aiEngine]);
-
-  useEffect(() => {
+    if (!isAuthenticated) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'p') {
         e.preventDefault(); setShowCommandPalette(true);
       }
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault(); handleSaveFile();
+        e.preventDefault(); 
+        const activeFile = files.find(f => f.id === tabs.find(t => t.isActive)?.fileId);
+        if (activeFile) {
+          setFiles(prev => prev.map(f => f.id === activeFile.id ? { ...f, isDirty: false, lastModified: Date.now() } : f));
+          addTerminalLine('output', `✓ Saved ${activeFile.name}`);
+        }
       }
       if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
-        e.preventDefault(); handleNewFile();
+        e.preventDefault(); 
+        const newFileId = `file-${Date.now()}`;
+        const newFile: FileItem = { id: newFileId, name: 'untitled.ts', content: '', language: 'typescript', type: 'file', parentId: 'src', lastModified: Date.now(), isDirty: false };
+        setFiles(prev => prev.map(f => f.id === 'src' ? { ...f, children: [...(f.children || []), newFileId] } : f).concat(newFile));
+        setTabs(prev => [...prev.map(t => ({ ...t, isActive: false })), { fileId: newFileId, isActive: true }]);
       }
       if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
         e.preventDefault(); setActiveSidebarIcon('search');
@@ -87,7 +83,7 @@ const App: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showBottomPanel]);
+  }, [showBottomPanel, isAuthenticated, files, tabs, setFiles, setTabs, setShowCommandPalette, setShowSettings, setActiveSidebarIcon, setShowBottomPanel, addTerminalLine]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -103,7 +99,23 @@ const App: React.FC = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizingSidebar, isResizingRight]);
+  }, [isResizingSidebar, isResizingRight, setSidebarWidth, setRightPanelWidth, setIsResizingSidebar, setIsResizingRight]);
+
+  // Check if we're on GitHub callback URL
+  const isGitHubCallback = window.location.pathname.includes('auth/github/callback') ||
+                           window.location.search.includes('code=');
+
+  // Show GitHub callback handler if on callback URL
+  if (isGitHubCallback) {
+    return <GitHubCallback />;
+  }
+
+  // Show welcome page if not authenticated
+  if (!isAuthenticated) {
+    return <Welcome />;
+  }
+
+  const activeFile = files.find(f => f.id === tabs.find(t => t.isActive)?.fileId);
 
   const handleSaveFile = () => {
     if (activeFile) {
