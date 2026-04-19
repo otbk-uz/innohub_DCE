@@ -105,16 +105,6 @@ const App: React.FC = () => {
   const isGitHubCallback = window.location.pathname.includes('auth/github/callback') ||
                            window.location.search.includes('code=');
 
-  // Show GitHub callback handler if on callback URL
-  if (isGitHubCallback) {
-    return <GitHubCallback />;
-  }
-
-  // Show welcome page if not authenticated
-  if (!isAuthenticated) {
-    return <Welcome />;
-  }
-
   const activeFile = files.find(f => f.id === tabs.find(t => t.isActive)?.fileId);
 
   const handleSaveFile = () => {
@@ -238,7 +228,7 @@ const App: React.FC = () => {
     { id: 'extensions', icon: Box, label: 'Extensions' },
   ];
 
-  return (
+  const mainApp = (
     <div className="h-screen w-screen bg-[#1e1e1e] text-[#cccccc] flex flex-col overflow-hidden">
       {/* Title Bar */}
       <div className="h-9 bg-[#181818] border-b border-[#2b2b2b] flex items-center justify-between px-3">
@@ -454,6 +444,17 @@ const App: React.FC = () => {
       <SettingsModal />
     </div>
   );
+
+  // Conditional rendering based on auth state
+  if (isGitHubCallback) {
+    return <GitHubCallback />;
+  }
+
+  if (!isAuthenticated) {
+    return <Welcome />;
+  }
+
+  return mainApp;
 };
 
 export default App;
