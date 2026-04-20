@@ -49,6 +49,24 @@ export interface AppState {
   searchResults: { file: FileItem; line: number; content: string }[];
   setSearchResults: (results: { file: FileItem; line: number; content: string }[]) => void;
 
+  // Problems Panel
+  problems: { file: string; line: number; column: number; severity: 'error' | 'warning' | 'info'; message: string; code?: string }[];
+  setProblems: (problems: { file: string; line: number; column: number; severity: 'error' | 'warning' | 'info'; message: string; code?: string }[]) => void;
+  addProblem: (problem: { file: string; line: number; column: number; severity: 'error' | 'warning' | 'info'; message: string; code?: string }) => void;
+  clearProblems: () => void;
+
+  // Debug Console
+  debugLogs: { id: string; type: 'log' | 'error' | 'warn' | 'info'; message: string; timestamp: number; source?: string }[];
+  setDebugLogs: (logs: { id: string; type: 'log' | 'error' | 'warn' | 'info'; message: string; timestamp: number; source?: string }[]) => void;
+  addDebugLog: (log: { type: 'log' | 'error' | 'warn' | 'info'; message: string; source?: string }) => void;
+  clearDebugLogs: () => void;
+
+  // Ports Panel
+  ports: { port: number; process: string; pid?: number; status: 'listening' | 'established' | 'closed' }[];
+  setPorts: (ports: { port: number; process: string; pid?: number; status: 'listening' | 'established' | 'closed' }[]) => void;
+  addPort: (port: { port: number; process: string; pid?: number; status: 'listening' | 'established' | 'closed' }) => void;
+  removePort: (port: number) => void;
+
   // GitHub
   githubUser: GitHubUser | null;
   setGithubUser: (user: GitHubUser | null) => void;
@@ -172,6 +190,26 @@ export const useAppStore = create<AppState>((set) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
   searchResults: [],
   setSearchResults: (results) => set({ searchResults: results }),
+
+  // Problems Panel
+  problems: [],
+  setProblems: (problems) => set({ problems }),
+  addProblem: (problem) => set((state) => ({ problems: [...state.problems, problem] })),
+  clearProblems: () => set({ problems: [] }),
+
+  // Debug Console
+  debugLogs: [],
+  setDebugLogs: (logs) => set({ debugLogs: logs }),
+  addDebugLog: (log) => set((state) => ({ 
+    debugLogs: [...state.debugLogs, { ...log, id: `debug-${Date.now()}`, timestamp: Date.now() }] 
+  })),
+  clearDebugLogs: () => set({ debugLogs: [] }),
+
+  // Ports Panel
+  ports: [],
+  setPorts: (ports) => set({ ports }),
+  addPort: (port) => set((state) => ({ ports: [...state.ports, port] })),
+  removePort: (portNum) => set((state) => ({ ports: state.ports.filter(p => p.port !== portNum) })),
 
   githubUser: null,
   setGithubUser: (user) => set({ githubUser: user }),
